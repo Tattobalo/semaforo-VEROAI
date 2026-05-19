@@ -1,15 +1,3 @@
-"""
-principal.py — Controlador principal de SEMAFORO-VEROAI
--------------------------------------------------------
-Correcciones aplicadas respecto a la versión original:
-  1. La transición ámbar SOLO afecta al carril que está en VERDE, no a todos.
-  2. La lógica de parpadeo queda EXCLUSIVAMENTE en el driver/Arduino, no en la UI.
-  3. El flujo manual→automático y automático→manual usa una máquina de estados
-     clara (EstadoSistema) para evitar condiciones de carrera.
-  4. La interfaz es responsiva gracias al nuevo ui_generated.py basado en layouts.
-  5. Se agrega el módulo ArduinoDriver con el protocolo de comunicación serial.
-"""
-
 from PyQt6 import QtWidgets, QtCore, QtGui
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect
 import os
@@ -20,10 +8,11 @@ from enum import Enum, auto
 from .ui_generated import Ui_MainWindow
 from ..ia.detector_yolo import DetectorYOLO
 from ..control.gestor_semaforos import GestorSemaforos
+from ..vision.camara import CamaraThread
+from ..vision.preprocesamiento import Preprocesador
+from ..vision.roi import GestorROI
 
-# ─────────────────────────────────────────────
 #  Driver Arduino (ver arduino_driver.py)
-# ─────────────────────────────────────────────
 try:
     from ..control.arduino_driver import ArduinoDriver
     ARDUINO_DISPONIBLE = True
@@ -31,9 +20,7 @@ except ImportError:
     ARDUINO_DISPONIBLE = False
 
 
-# ─────────────────────────────────────────────
 #  Máquina de estados del sistema
-# ─────────────────────────────────────────────
 class EstadoSistema(Enum):
     AUTOMATICO   = auto()   # IA controla todo
     TRANSICION   = auto()   # Ámbar de seguridad activo (ni manual ni auto)
@@ -42,6 +29,9 @@ class EstadoSistema(Enum):
 
 # Duración (ms) de la fase ámbar de seguridad
 DURACION_AMBAR_MS = 7_000
+
+# Timeout (ms) de inactividad en modo manual antes de volver a automático (1 minuto)
+TIMEOUT_INACTIVIDAD_MANUAL_MS = 60_000
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -56,11 +46,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.carril_verde_actual = 0        # Índice del carril actualmente en verde
         self.carril_manual_objetivo = 0     # Carril elegido por el operador
 
-        # ── IA y Control ──────────────────────────────────────────
+        #  IA y Control 
         self.detector = DetectorYOLO()
         self.gestor   = GestorSemaforos()
+        self.ultimo_yolo = 0
+        self.intervalo_yolo = 5  # segundos
 
-        # ── Driver Arduino (opcional) ──────────────────────────────
+        #  Driver Arduino (opcional) 
         self.arduino: ArduinoDriver | None = None
         if ARDUINO_DISPONIBLE:
             try:
@@ -70,16 +62,19 @@ class MainWindow(QtWidgets.QMainWindow):
             except Exception as e:
                 self.statusBar().showMessage(f"Arduino no disponible: {e}")
 
-        # ── Vistas de cámara ──────────────────────────────────────
+        # Vistas de cámara
         self.vistas = [self.ui.vista1, self.ui.vista2, self.ui.vista3, self.ui.vista4]
         self.labels_camara: list[QtWidgets.QLabel] = []
+        
+        self.roi_manager = GestorROI()
+        self.detector = DetectorYOLO()
 
         for i in range(4):
             layout = QtWidgets.QVBoxLayout(self.vistas[i])
             layout.setContentsMargins(2, 2, 2, 2)
 
             label = QtWidgets.QLabel()
-            label.setScaledContents(True)
+            label.setScaledContents(False)
             label.setStyleSheet("background-color: transparent;")
             label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(label)
@@ -90,22 +85,36 @@ class MainWindow(QtWidgets.QMainWindow):
             if i >= self.num_carriles:
                 self.vistas[i].hide()
 
-        # ── Sección de pesos ──────────────────────────────────────
+        #  Sección de pesos 
         self._configurar_seccion_pesos()
 
-        # ── Sección de control manual ─────────────────────────────
+        #  Sección de control manual 
         self._configurar_control_manual()
 
-        # ── Timer principal (ciclo IA cada 5 s) ──────────────────
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.ejecutar_ciclo_sistema)
-        self.timer.start(5_000)
+        self.camaras = []
 
-        QtCore.QTimer.singleShot(500, self.ejecutar_ciclo_sistema)
+        fuentes = [
+            0
+        ]
 
-    # ═══════════════════════════════════════════════════════════════
+        for idx, fuente in enumerate(fuentes):
+
+            hilo = CamaraThread(idx, fuente)
+
+            hilo.frame_actualizado.connect(
+                self.procesar_frame
+            )
+
+            hilo.start()
+
+            self.camaras.append(hilo)
+
+        # Timer de inactividad manual en 1 min
+        self.timer_inactividad = QtCore.QTimer()
+        self.timer_inactividad.setSingleShot(True)
+        self.timer_inactividad.timeout.connect(self._timeout_inactividad_manual)
+
     #  Configuración de UI
-    # ═══════════════════════════════════════════════════════════════
 
     def _configurar_seccion_pesos(self):
         estilo = (
@@ -128,7 +137,23 @@ class MainWindow(QtWidgets.QMainWindow):
             widget.setStyleSheet(estilo)
             widget.setText(valores_defecto[clave])
 
-        self.ui.pushButton_4.clicked.connect(self.ejecutar_ciclo_sistema)
+        self.ui.pushButton_4.clicked.connect(
+            self.actualizar_pesos
+        )
+
+    def actualizar_pesos(self):
+        nuevos_pesos = {}
+        for clase, input_box in self.inputs_pesos.items():
+
+            try:
+                nuevos_pesos[clase] = float(
+                    input_box.text()
+                )
+            except:
+                nuevos_pesos[clase] = 1.0
+
+        print(nuevos_pesos)
+
 
     def _configurar_control_manual(self):
         """
@@ -162,7 +187,7 @@ class MainWindow(QtWidgets.QMainWindow):
         fila_btns = QtWidgets.QHBoxLayout()
         fila_btns.setSpacing(10)
 
-        self.btn_forzar = QtWidgets.QPushButton("⚡ Forzar Carril")
+        self.btn_forzar = QtWidgets.QPushButton("Forzar Carril")
         self.btn_forzar.setFixedHeight(36)
         self.btn_forzar.setStyleSheet(
             "background-color: #EDFF08; color: black;"
@@ -170,7 +195,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         self.btn_forzar.clicked.connect(self._solicitar_modo_manual)
 
-        self.btn_auto = QtWidgets.QPushButton("🤖 Modo Auto")
+        self.btn_auto = QtWidgets.QPushButton("Modo Auto")
         self.btn_auto.setFixedHeight(36)
         self.btn_auto.setStyleSheet(
             "background-color: #A8FE39; color: black;"
@@ -190,9 +215,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         layout_man.addWidget(self.lbl_estado)
 
-    # ═══════════════════════════════════════════════════════════════
     #  Máquina de estados de transición
-    # ═══════════════════════════════════════════════════════════════
 
     def _solicitar_modo_manual(self):
         """
@@ -247,13 +270,30 @@ class MainWindow(QtWidgets.QMainWindow):
             self.estado = EstadoSistema.MANUAL
             self._actualizar_colores_semaforo(self.carril_manual_objetivo)
             print(f"[MANUAL] Carril {self.carril_manual_objetivo + 1} en VERDE.")
+            # Arrancar watchdog de inactividad (1 min)
+            self.timer_inactividad.start(TIMEOUT_INACTIVIDAD_MANUAL_MS)
+            self.statusBar().showMessage(
+                f"MANUAL activo — regresa a AUTO en {TIMEOUT_INACTIVIDAD_MANUAL_MS // 1000}s sin actividad"
+            )
 
         elif destino == EstadoSistema.AUTOMATICO:
+            self.timer_inactividad.stop()
             self.estado = EstadoSistema.AUTOMATICO
             print("[AUTO] Control devuelto a la IA.")
-            self.ejecutar_ciclo_sistema()   # Ciclo inmediato para asignar verde correcto
+            self.ejecutar_ciclo_sistema()
 
         self._actualizar_indicador_estado()
+
+    def _timeout_inactividad_manual(self):
+        """
+        Llamado si pasa 1 min en MANUAL sin actividad en el carril forzado.
+        Inicia transición ámbar de seguridad hacia automático.
+        """
+        if self.estado != EstadoSistema.MANUAL:
+            return
+        print("[WATCHDOG] 1 min sin actividad en modo manual → regresando a AUTO")
+        self.statusBar().showMessage("Sin actividad 60s — regresando a modo automático...")
+        self._iniciar_transicion_ambar(destino=EstadoSistema.AUTOMATICO)
 
     def _actualizar_indicador_estado(self):
         textos = {
@@ -267,43 +307,6 @@ class MainWindow(QtWidgets.QMainWindow):
             f"color: {color}; font: bold 11pt 'Segoe UI'; background: transparent;"
         )
 
-    # ═══════════════════════════════════════════════════════════════
-    #  Ciclo principal de detección
-    # ═══════════════════════════════════════════════════════════════
-
-    def ejecutar_ciclo_sistema(self):
-        """
-        Captura pesos, ejecuta YOLO y actualiza la UI.
-        Si estamos en TRANSICIÓN o MANUAL, solo actualiza imágenes sin cambiar colores.
-        """
-        pesos = self._leer_pesos()
-        conteos = []
-
-        output_dir = "test/procesadas"
-        os.makedirs(output_dir, exist_ok=True)
-
-        for i in range(self.num_carriles):
-            path_in = f"test/carril_{i + 1}.jpg"
-            if os.path.exists(path_in):
-                img, c = self.detector.procesar_interseccion(path_in)
-                conteos.append(c)
-                self._mostrar_imagen(i, img)
-                cv2.imwrite(f"{output_dir}/inf_{i + 1}.jpg", img)
-            else:
-                conteos.append({})
-
-        # Respeta la prioridad de estado
-        if self.estado == EstadoSistema.TRANSICION:
-            return
-        if self.estado == EstadoSistema.MANUAL:
-            self._actualizar_colores_semaforo(self.carril_manual_objetivo)
-            return
-
-        # Modo automático: la IA decide
-        idx_verde = self.gestor.calcular_prioridades(conteos, pesos)
-        self._actualizar_colores_semaforo(idx_verde)
-        self._limpiar_cache(output_dir)
-
     def _leer_pesos(self) -> dict:
         pesos = {}
         for clave, widget in self.inputs_pesos.items():
@@ -316,15 +319,112 @@ class MainWindow(QtWidgets.QMainWindow):
     def _mostrar_imagen(self, idx: int, img):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w, ch = img_rgb.shape
+
         q_img = QtGui.QImage(
-            img_rgb.data, w, h, ch * w,
+            img_rgb.data,
+            w,
+            h,
+            ch * w,
             QtGui.QImage.Format.Format_RGB888
         )
-        self.labels_camara[idx].setPixmap(QtGui.QPixmap.fromImage(q_img.copy()))
 
-    # ═══════════════════════════════════════════════════════════════
+        pixmap = QtGui.QPixmap.fromImage(q_img.copy())
+
+        label = self.labels_camara[idx]
+
+        pixmap_escalado = pixmap.scaled(
+            label.size(),
+            QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+            QtCore.Qt.TransformationMode.SmoothTransformation
+        )
+
+        label.setPixmap(pixmap_escalado)
+
+    def procesar_frame(self, idx_camara, frame):
+
+        # Mostrar SIEMPRE la cámara
+        self.actualizar_ui(
+            idx_camara,
+            frame
+        )
+
+        tiempo_actual = time.time()
+
+        # Esperar N segundos entre inferencias
+        if (
+            tiempo_actual - self.ultimo_yolo
+            < self.intervalo_yolo
+        ):
+            return
+
+        self.ultimo_yolo = tiempo_actual
+
+        print("\n===== EJECUTANDO YOLO =====")
+
+        frame = Preprocesador.procesar(frame)
+
+        rois = self.roi_manager.obtener_rois(
+            idx_camara,
+            frame
+        )
+
+        for nombre_carril, roi in rois.items():
+
+            resultado, conteos, detecciones = (
+                self.detector.detectar(roi)
+            )
+
+            self.actualizar_conteos(
+                nombre_carril,
+                conteos
+            )
+
+    def actualizar_conteos(
+        self,
+        nombre_carril,
+        conteos
+    ):
+
+        print(f"\n[{nombre_carril}]")
+
+        for clase, cantidad in conteos.items():
+
+            print(f"{clase}: {cantidad}")
+
+    def actualizar_ui(self, idx, img):
+
+        img_rgb = cv2.cvtColor(
+            img,
+            cv2.COLOR_BGR2RGB
+        )
+
+        h, w, ch = img_rgb.shape
+
+        q_img = QtGui.QImage(
+            img_rgb.data,
+            w,
+            h,
+            ch * w,
+            QtGui.QImage.Format.Format_RGB888
+        )
+
+        pixmap = QtGui.QPixmap.fromImage(
+            q_img.copy()
+        )
+
+        label = self.labels_camara[idx]
+
+        pixmap_escalado = pixmap.scaled(
+            label.size(),
+            QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+            QtCore.Qt.TransformationMode.SmoothTransformation
+        )
+
+        label.setPixmap(
+            pixmap_escalado
+        )
+
     #  Actualización visual de semáforos
-    # ═══════════════════════════════════════════════════════════════
 
     def _actualizar_colores_semaforo(self, index_verde: int):
         """
@@ -361,9 +461,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         self._aplicar_neon(vista, q_c)
 
-    # ═══════════════════════════════════════════════════════════════
     #  Utilidades
-    # ═══════════════════════════════════════════════════════════════
 
     def _aplicar_neon(self, widget, color=QtGui.QColor(168, 254, 57)):
         efecto = QGraphicsDropShadowEffect(self)

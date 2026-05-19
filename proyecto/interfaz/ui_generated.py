@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file '.\interfaz.ui'
+# Form implementation generated from reading ui file 'proyecto/interfaz/interfaz.ui'
 #
 # Created by: PyQt6 UI code generator 6.11.0
 #
@@ -12,174 +12,110 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setEnabled(True)
-        MainWindow.resize(1300, 766)
+        MainWindow.resize(1100, 680)
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        self.frame_principal = QtWidgets.QFrame(parent=self.centralwidget)
-        self.frame_principal.setGeometry(QtCore.QRect(0, 0, 1300, 768))
-        self.frame_principal.setStyleSheet("background-color: rgb(0, 0, 0);\n"
-"")
-        self.frame_principal.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.frame_principal.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.frame_principal.setObjectName("frame_principal")
-        self.vista1 = QtWidgets.QFrame(parent=self.frame_principal)
-        self.vista1.setGeometry(QtCore.QRect(30, 50, 300, 300))
-        self.vista1.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-"border: 4px solid rgb(168, 254, 57);\n"
-"border-radius: 10px;")
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.grid_camaras = QtWidgets.QGridLayout()
+
+        # Espaciado uniforme
+        self.grid_camaras.setSpacing(10)
+
+        # Fuerza una cuadrícula 2x2 perfectamente proporcional
+        self.grid_camaras.setColumnStretch(0, 1)
+        self.grid_camaras.setColumnStretch(1, 1)
+
+        self.grid_camaras.setRowStretch(0, 1)
+        self.grid_camaras.setRowStretch(1, 1)
+
+        self.grid_camaras.setObjectName("grid_camaras")
+
+        self.vista1 = QtWidgets.QFrame(parent=self.centralwidget)
+        self.vista1.setMinimumSize(QtCore.QSize(320, 240))
         self.vista1.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.vista1.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.vista1.setObjectName("vista1")
-        self.vista2 = QtWidgets.QFrame(parent=self.frame_principal)
-        self.vista2.setGeometry(QtCore.QRect(380, 50, 300, 300))
-        self.vista2.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-"border: 4px solid rgb(168, 254, 57);\n"
-"border-radius: 10px;")
+        self.grid_camaras.addWidget(self.vista1, 0, 0, 1, 1)
+        self.vista2 = QtWidgets.QFrame(parent=self.centralwidget)
+        self.vista2.setMinimumSize(QtCore.QSize(320, 240))
         self.vista2.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.vista2.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.vista2.setObjectName("vista2")
-        self.vista3 = QtWidgets.QFrame(parent=self.frame_principal)
-        self.vista3.setGeometry(QtCore.QRect(30, 400, 300, 300))
-        self.vista3.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-"border: 4px solid rgb(168, 254, 57);\n"
-"border-radius: 10px;")
+        self.grid_camaras.addWidget(self.vista2, 0, 1, 1, 1)
+        self.vista3 = QtWidgets.QFrame(parent=self.centralwidget)
+        self.vista3.setMinimumSize(QtCore.QSize(320, 240))
         self.vista3.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.vista3.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.vista3.setObjectName("vista3")
-        self.vista4 = QtWidgets.QFrame(parent=self.frame_principal)
-        self.vista4.setGeometry(QtCore.QRect(380, 400, 300, 300))
-        self.vista4.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-"border: 4px solid rgb(168, 254, 57);\n"
-"border-radius: 10px;")
+        self.grid_camaras.addWidget(self.vista3, 1, 0, 1, 1)
+        self.vista4 = QtWidgets.QFrame(parent=self.centralwidget)
+        self.vista4.setMinimumSize(QtCore.QSize(320, 240))
         self.vista4.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.vista4.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.vista4.setObjectName("vista4")
-        self.semaforo_man = QtWidgets.QFrame(parent=self.frame_principal)
-        self.semaforo_man.setGeometry(QtCore.QRect(730, 10, 521, 361))
-        self.semaforo_man.setStyleSheet("#semaforo_man {\n"
-"background-color: rgb(0, 0, 0);\n"
-"border: 4px solid rgb(168, 254, 57);\n"
-"border-radius: 10px;\n"
-"}\n"
-"\n"
-"\n"
-"")
+        self.grid_camaras.addWidget(self.vista4, 1, 1, 1, 1)
+        self.horizontalLayout.addLayout(self.grid_camaras)
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.semaforo_man = QtWidgets.QFrame(parent=self.centralwidget)
+        self.semaforo_man.setMinimumSize(QtCore.QSize(320, 220))
         self.semaforo_man.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.semaforo_man.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.semaforo_man.setObjectName("semaforo_man")
-        self.label = QtWidgets.QLabel(parent=self.semaforo_man)
-        self.label.setGeometry(QtCore.QRect(80, 10, 341, 51))
-        self.label.setStyleSheet("font: 24pt \"MS Shell Dlg 2\";\n"
-"color: rgb(255, 255, 255);")
-        self.label.setObjectName("label")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.semaforo_man)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.pushButton = QtWidgets.QPushButton(parent=self.semaforo_man)
-        self.pushButton.setGeometry(QtCore.QRect(210, 80, 75, 75))
-        self.pushButton.setStyleSheet("background-color: rgb(0, 170, 0);\n"
-"\n"
-"border-radius:37;\n"
-"")
-        self.pushButton.setText("")
         self.pushButton.setObjectName("pushButton")
+        self.verticalLayout_2.addWidget(self.pushButton)
         self.pushButton_2 = QtWidgets.QPushButton(parent=self.semaforo_man)
-        self.pushButton_2.setGeometry(QtCore.QRect(210, 170, 75, 75))
-        self.pushButton_2.setStyleSheet("\n"
-"background-color: rgb(200, 186, 29);\n"
-"\n"
-"border-radius:37;")
-        self.pushButton_2.setText("")
         self.pushButton_2.setObjectName("pushButton_2")
+        self.verticalLayout_2.addWidget(self.pushButton_2)
         self.pushButton_3 = QtWidgets.QPushButton(parent=self.semaforo_man)
-        self.pushButton_3.setGeometry(QtCore.QRect(210, 260, 75, 75))
-        self.pushButton_3.setStyleSheet("background-color: rgb(170, 0, 0);\n"
-"\n"
-"border-radius:37;")
-        self.pushButton_3.setText("")
         self.pushButton_3.setObjectName("pushButton_3")
-        self.pesos = QtWidgets.QFrame(parent=self.frame_principal)
-        self.pesos.setGeometry(QtCore.QRect(730, 390, 521, 361))
-        self.pesos.setStyleSheet("#pesos {\n"
-"background-color: rgb(0, 0, 0);\n"
-"border: 4px solid rgb(168, 254, 57);\n"
-"border-radius: 10px;\n"
-"}\n"
-"")
-        self.pesos.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.pesos.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.pesos.setObjectName("pesos")
-        self.label_2 = QtWidgets.QLabel(parent=self.pesos)
-        self.label_2.setGeometry(QtCore.QRect(80, 0, 401, 51))
-        self.label_2.setStyleSheet("font: 20pt \"MS Shell Dlg 2\";\n"
-"color: rgb(255, 255, 255);\n"
-"")
-        self.label_2.setObjectName("label_2")
-        self.label_3 = QtWidgets.QLabel(parent=self.pesos)
-        self.label_3.setGeometry(QtCore.QRect(20, 60, 131, 31))
-        self.label_3.setStyleSheet("font: 16pt \"MS Shell Dlg 2\";\n"
-"color: rgb(255, 255, 255);")
-        self.label_3.setObjectName("label_3")
-        self.label_4 = QtWidgets.QLabel(parent=self.pesos)
-        self.label_4.setGeometry(QtCore.QRect(20, 110, 131, 31))
-        self.label_4.setStyleSheet("font: 16pt \"MS Shell Dlg 2\";\n"
-"color: rgb(255, 255, 255);")
-        self.label_4.setObjectName("label_4")
-        self.label_5 = QtWidgets.QLabel(parent=self.pesos)
-        self.label_5.setGeometry(QtCore.QRect(20, 160, 131, 31))
-        self.label_5.setStyleSheet("font: 16pt \"MS Shell Dlg 2\";\n"
-"color: rgb(255, 255, 255);")
-        self.label_5.setObjectName("label_5")
-        self.label_6 = QtWidgets.QLabel(parent=self.pesos)
-        self.label_6.setGeometry(QtCore.QRect(20, 200, 131, 31))
-        self.label_6.setStyleSheet("font: 16pt \"MS Shell Dlg 2\";\n"
-"color: rgb(255, 255, 255);")
-        self.label_6.setObjectName("label_6")
-        self.label_7 = QtWidgets.QLabel(parent=self.pesos)
-        self.label_7.setGeometry(QtCore.QRect(20, 250, 131, 31))
-        self.label_7.setStyleSheet("font: 16pt \"MS Shell Dlg 2\";\n"
-"color: rgb(255, 255, 255);")
-        self.label_7.setObjectName("label_7")
-        self.label_8 = QtWidgets.QLabel(parent=self.pesos)
-        self.label_8.setGeometry(QtCore.QRect(20, 300, 131, 31))
-        self.label_8.setStyleSheet("font: 16pt \"MS Shell Dlg 2\";\n"
-"color: rgb(255, 255, 255);")
-        self.label_8.setObjectName("label_8")
-        self.lineEdit = QtWidgets.QLineEdit(parent=self.pesos)
-        self.lineEdit.setGeometry(QtCore.QRect(160, 60, 191, 31))
-        self.lineEdit.setStyleSheet("\n"
-"background-color: rgb(255, 255, 255);")
+        self.verticalLayout_2.addWidget(self.pushButton_3)
+        self.verticalLayout.addWidget(self.semaforo_man)
+        self.frame_pesos = QtWidgets.QFrame(parent=self.centralwidget)
+        self.frame_pesos.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.frame_pesos.setObjectName("frame_pesos")
+        self.formLayout = QtWidgets.QFormLayout(self.frame_pesos)
+        self.formLayout.setObjectName("formLayout")
+        self.label_1 = QtWidgets.QLabel(parent=self.frame_pesos)
+        self.label_1.setObjectName("label_1")
+        self.formLayout.setWidget(0, QtWidgets.QFormLayout.ItemRole.LabelRole, self.label_1)
+        self.lineEdit = QtWidgets.QLineEdit(parent=self.frame_pesos)
         self.lineEdit.setObjectName("lineEdit")
-        self.lineEdit_2 = QtWidgets.QLineEdit(parent=self.pesos)
-        self.lineEdit_2.setGeometry(QtCore.QRect(160, 110, 191, 31))
-        self.lineEdit_2.setStyleSheet("\n"
-"background-color: rgb(255, 255, 255);")
+        self.formLayout.setWidget(0, QtWidgets.QFormLayout.ItemRole.FieldRole, self.lineEdit)
+        self.label_2 = QtWidgets.QLabel(parent=self.frame_pesos)
+        self.label_2.setObjectName("label_2")
+        self.formLayout.setWidget(1, QtWidgets.QFormLayout.ItemRole.LabelRole, self.label_2)
+        self.lineEdit_2 = QtWidgets.QLineEdit(parent=self.frame_pesos)
         self.lineEdit_2.setObjectName("lineEdit_2")
-        self.lineEdit_3 = QtWidgets.QLineEdit(parent=self.pesos)
-        self.lineEdit_3.setGeometry(QtCore.QRect(160, 160, 191, 31))
-        self.lineEdit_3.setStyleSheet("\n"
-"background-color: rgb(255, 255, 255);")
+        self.formLayout.setWidget(1, QtWidgets.QFormLayout.ItemRole.FieldRole, self.lineEdit_2)
+        self.label_3 = QtWidgets.QLabel(parent=self.frame_pesos)
+        self.label_3.setObjectName("label_3")
+        self.formLayout.setWidget(2, QtWidgets.QFormLayout.ItemRole.LabelRole, self.label_3)
+        self.lineEdit_3 = QtWidgets.QLineEdit(parent=self.frame_pesos)
         self.lineEdit_3.setObjectName("lineEdit_3")
-        self.lineEdit_4 = QtWidgets.QLineEdit(parent=self.pesos)
-        self.lineEdit_4.setGeometry(QtCore.QRect(160, 200, 191, 31))
-        self.lineEdit_4.setStyleSheet("\n"
-"background-color: rgb(255, 255, 255);")
+        self.formLayout.setWidget(2, QtWidgets.QFormLayout.ItemRole.FieldRole, self.lineEdit_3)
+        self.label_4 = QtWidgets.QLabel(parent=self.frame_pesos)
+        self.label_4.setObjectName("label_4")
+        self.formLayout.setWidget(3, QtWidgets.QFormLayout.ItemRole.LabelRole, self.label_4)
+        self.lineEdit_4 = QtWidgets.QLineEdit(parent=self.frame_pesos)
         self.lineEdit_4.setObjectName("lineEdit_4")
-        self.lineEdit_5 = QtWidgets.QLineEdit(parent=self.pesos)
-        self.lineEdit_5.setGeometry(QtCore.QRect(160, 250, 191, 31))
-        self.lineEdit_5.setStyleSheet("\n"
-"background-color: rgb(255, 255, 255);")
+        self.formLayout.setWidget(3, QtWidgets.QFormLayout.ItemRole.FieldRole, self.lineEdit_4)
+        self.label_5 = QtWidgets.QLabel(parent=self.frame_pesos)
+        self.label_5.setObjectName("label_5")
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.ItemRole.LabelRole, self.label_5)
+        self.lineEdit_5 = QtWidgets.QLineEdit(parent=self.frame_pesos)
         self.lineEdit_5.setObjectName("lineEdit_5")
-        self.lineEdit_6 = QtWidgets.QLineEdit(parent=self.pesos)
-        self.lineEdit_6.setGeometry(QtCore.QRect(160, 300, 191, 31))
-        self.lineEdit_6.setStyleSheet("\n"
-"background-color: rgb(255, 255, 255);")
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.ItemRole.FieldRole, self.lineEdit_5)
+        self.label_6 = QtWidgets.QLabel(parent=self.frame_pesos)
+        self.label_6.setObjectName("label_6")
+        self.formLayout.setWidget(5, QtWidgets.QFormLayout.ItemRole.LabelRole, self.label_6)
+        self.lineEdit_6 = QtWidgets.QLineEdit(parent=self.frame_pesos)
         self.lineEdit_6.setObjectName("lineEdit_6")
-        self.pushButton_4 = QtWidgets.QPushButton(parent=self.pesos)
-        self.pushButton_4.setGeometry(QtCore.QRect(390, 170, 93, 28))
-        self.pushButton_4.setStyleSheet("background-color: rgb(237, 255, 8);\n"
-"selection-background-color: rgb(168, 254, 57);\n"
-"border: 4px solid rgb(168, 254, 57);\n"
-"border-radius: 10px;")
+        self.formLayout.setWidget(5, QtWidgets.QFormLayout.ItemRole.FieldRole, self.lineEdit_6)
+        self.pushButton_4 = QtWidgets.QPushButton(parent=self.frame_pesos)
         self.pushButton_4.setObjectName("pushButton_4")
+        self.formLayout.setWidget(6, QtWidgets.QFormLayout.ItemRole.SpanningRole, self.pushButton_4)
+        self.verticalLayout.addWidget(self.frame_pesos)
+        self.horizontalLayout.addLayout(self.verticalLayout)
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -190,13 +126,14 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.label.setText(_translate("MainWindow", "Semaforo manual"))
-        self.label_2.setText(_translate("MainWindow", "Modificacion de pesos"))
-        self.label_3.setText(_translate("MainWindow", "truck"))
-        self.label_4.setText(_translate("MainWindow", "bus"))
-        self.label_5.setText(_translate("MainWindow", "car"))
-        self.label_6.setText(_translate("MainWindow", "motorbike"))
-        self.label_7.setText(_translate("MainWindow", "bicycle"))
-        self.label_8.setText(_translate("MainWindow", "person"))
-        self.pushButton_4.setText(_translate("MainWindow", "Aplicar pesos"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "SEMAFORO-VEROAI"))
+        self.pushButton.setText(_translate("MainWindow", "Rojo"))
+        self.pushButton_2.setText(_translate("MainWindow", "Ámbar"))
+        self.pushButton_3.setText(_translate("MainWindow", "Verde"))
+        self.label_1.setText(_translate("MainWindow", "Truck"))
+        self.label_2.setText(_translate("MainWindow", "Bus"))
+        self.label_3.setText(_translate("MainWindow", "Car"))
+        self.label_4.setText(_translate("MainWindow", "Motorbike"))
+        self.label_5.setText(_translate("MainWindow", "Bicycle"))
+        self.label_6.setText(_translate("MainWindow", "Person"))
+        self.pushButton_4.setText(_translate("MainWindow", "Actualizar IA"))
